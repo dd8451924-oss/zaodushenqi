@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>朗读成长树 - 游戏化学习</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial Rounded MT Bold', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .tree-container {
+            position: relative;
+            width: 300px;
+            height: 400px;
+            margin: 20px 0;
+        }
+        
+        canvas {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .control-panel {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-pause {
+            background: #ff9800;
+        }
+        
+        .btn-pause:hover {
+            background: #e68900;
+        }
+        
+        .btn-stop {
+            background: #f44336;
+        }
+        
+        .btn-stop:hover {
+            background: #d32f2f;
+        }
+        
+        .settings-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+        
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+            height: 20px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+        
+        .status-bar {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.1rem;
+            margin: 10px 0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .stat-box {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+        }
+        
+        .value-display {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 5px;
+        }
+        
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 99;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: gold;
+            border-radius: 50%;
+            animation: float 2s ease-out forwards;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .celebration {
+            animation: celebration 0.5s ease infinite alternate;
+        }
+        
+        @keyframes celebration {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.1);
+            }
+        }
+        
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>朗读成长树</h1>
+            <p class="subtitle">用你的声音浇灌小树，让它茁壮成长！</p>
+        </header>
+        
+        <div class="tree-container">
+            <canvas id="treeCanvas" width="300" height="400"></canvas>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div>当前音量</div>
+                <div class="stat-value" id="currentVolume">0 dB</div>
+            </div>
+            <div class="stat-box">
+                <div>达标时间</div>
+                <div class="stat-value" id="timeElapsed">0:00</div>
+            </div>
+            <div class="stat-box">
+                <div>成长值</div>
+                <div class="stat-value" id="growthValue">0%</div>
+            </div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div class="status-bar" id="statusBar">
+            点击"开始朗读"按钮，用你的声音浇灌小树！
+        </div>
+        
+        <div class="control-panel">
+            <button class="btn" id="startBtn">开始朗读</button>
+            <button class="btn btn-pause" id="pauseBtn" disabled>暂停</button>
+            <button class="btn btn-stop" id="stopBtn" disabled>停止</button>
+            <button class="settings-btn" id="settingsBtn">⚙️</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">设置</h2>
+                <button class="close-btn" id="closeModal">×</button>
+            </div>
+            <div class="form-group">
+                <label for="targetDb">达标分贝值 (20-100 dB)</label>
+                <input type="range" id="targetDb" min="20" max="100" value="60">
+                <div class="value-display" id="targetDbValue">60 dB</div>
+            </div>
+            <div class="form-group">
+                <label for="targetTime">目标时长 (1-60 分钟)</label>
+                <input type="range" id="targetTime" min="1" max="60" value="10">
+                <div class="value-display" id="targetTimeValue">10 分钟</div>
+            </div>
+            <button class="btn" id="saveSettings">保存设置</button>
+        </div>
+    </div>
+    
+    <div class="particles" id="particlesContainer"></div>
+    
+    <footer>
+        <p>朗读成长树 - 游戏化学习应用 | 使用Web Audio API</p>
+    </footer>
+
+    <script>
+        // 全局变量
+        let audioContext;
+        let analyser;
+        let microphone;
+        let javascriptNode;
+        let isRecording = false;
+        let isPaused = false;
+        let growth = 0;
+        let elapsedTime = 0;
+        let targetTime = 10 * 60; // 默认10分钟，单位秒
+        let targetDb = 60; // 默认60分贝
+        let validReadingTime = 0;
+        let animationId;
+        let treeGrowth = 0;
+        
+        // DOM元素
+        const treeCanvas = document.getElementById('treeCanvas');
+        const ctx = treeCanvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeModal = document.getElementById('closeModal');
+        const saveSettings = document.getElementById('saveSettings');
+        const targetDbSlider = document.getElementById('targetDb');
+        const targetTimeSlider = document.getElementById('targetTime');
+        const targetDbValue = document.getElementById('targetDbValue');
+        const targetTimeValue = document.getElementById('targetTimeValue');
+        const progressBar = document.getElementById('progressBar');
+        const statusBar = document.getElementById('statusBar');
+        const currentVolume = document.getElementById('currentVolume');
+        const timeElapsed = document.getElementById('timeElapsed');
+        const growthValue = document.getElementById('growthValue');
+        const particlesContainer = document.getElementById('particlesContainer');
+        
+        // 初始化
+        function init() {
+            drawTree(0);
+            setupEventListeners();
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            startBtn.addEventListener('click', startRecording);
+            pauseBtn.addEventListener('click', togglePause);
+            stopBtn.addEventListener('click', stopRecording);
+            settingsBtn.addEventListener('click', () => settingsModal.style.display = 'flex');
+            closeModal.addEventListener('click', () => settingsModal.style.display = 'none');
+            saveSettings.addEventListener('click', saveSettingsHandler);
+            
+            targetDbSlider.addEventListener('input', () => {
+                targetDbValue.textContent = `${targetDbSlider.value} dB`;
+            });
+            
+            targetTimeSlider.addEventListener('input', () => {
+                targetTimeValue.textContent = `${targetTimeSlider.value} 分钟`;
+            });
+            
+            // 点击模态框外部关闭
+            window.addEventListener('click', (e) => {
+                if (e.target === settingsModal) {
+                    settingsModal.style.display = 'none';
+                }
+            });
+        }
+        
+        // 保存设置
+        function saveSettingsHandler() {
+            targetDb = parseInt(targetDbSlider.value);
+            targetTime = parseInt(targetTimeSlider.value) * 60; // 转换为秒
+            settingsModal.style.display = 'none';
+            updateStatusBar(`设置已更新：目标分贝 ${targetDb} dB，目标时长 ${targetTime/60} 分钟`);
+        }
+        
+        // 开始录音
+        function startRecording() {
+            if (isRecording) return;
+            
+            // 请求麦克风权限
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+                    microphone = audioContext.createMediaStreamSource(stream);
+                    javascriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+                    
+                    analyser.smoothingTimeConstant = 0.8;
+                    analyser.fftSize = 1024;
+                    
+                    microphone.connect(analyser);
+                    analyser.connect(javascriptNode);
+                    javascriptNode.connect(audioContext.destination);
+                    
+                    javascriptNode.onaudioprocess = processAudio;
+                    
+                    isRecording = true;
+                    isPaused = false;
+                    startBtn.disabled = true;
+                    pauseBtn.disabled = false;
+                    stopBtn.disabled = false;
+                    
+                    updateStatusBar("正在检测你的声音...请大声朗读！");
+                    
+                    // 开始动画循环
+                    animateTree();
+                })
+                .catch(err => {
+                    console.error("无法访问麦克风:", err);
+                    updateStatusBar("无法访问麦克风，请检查权限设置。");
+                });
+        }
+        
+        // 处理音频数据
+        function processAudio() {
+            const array = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(array);
+            
+            let values = 0;
+            const length = array.length;
+            
+            for (let i = 0; i < length; i++) {
+                values += array[i];
+            }
+            
+            const average = values / length;
+            const db = Math.round(average * 100 / 255); // 转换为0-100的分贝近似值
+            
+            // 更新当前音量显示
+            currentVolume.textContent = `${db} dB`;
+            
+            // 如果音量达到目标分贝，增加有效朗读时间
+            if (db >= targetDb && !isPaused) {
+                validReadingTime += 0.1; // 每次处理大约0.1秒
+                elapsedTime += 0.1;
+                
+                // 计算成长值 (0-100%)
+                const progress = Math.min(100, (validReadingTime / targetTime) * 100);
+                treeGrowth = progress;
+                
+                // 更新进度条
+                progressBar.style.width = `${progress}%`;
+                growthValue.textContent = `${Math.round(progress)}%`;
+                
+                // 更新时间显示
+                const minutes = Math.floor(elapsedTime / 60);
+                const seconds = Math.floor(elapsedTime % 60);
+                timeElapsed.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                
+                // 检查是否达成目标
+                if (validReadingTime >= targetTime) {
+                    celebrate();
+                }
+            }
+        }
+        
+        // 切换暂停状态
+        function togglePause() {
+            isPaused = !isPaused;
+            
+            if (isPaused) {
+                pauseBtn.textContent = "继续";
+                updateStatusBar("已暂停");
+            } else {
+                pauseBtn.textContent = "暂停";
+                updateStatusBar("继续朗读...");
+            }
+        }
+        
+        // 停止录音
+        function stopRecording() {
+            if (!isRecording) return;
+            
+            if (javascriptNode) {
+                javascriptNode.disconnect();
+            }
+            if (microphone) {
+                microphone.disconnect();
+            }
+            if (analyser) {
+                analyser.disconnect();
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+            
+            isRecording = false;
+            isPaused = false;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            stopBtn.disabled = true;
+            pauseBtn.textContent = "暂停";
+            
+            updateStatusBar("朗读已停止");
+            
+            // 停止动画
+            cancelAnimationFrame(animationId);
+        }
+        
+        // 更新状态栏
+        function updateStatusBar(message) {
+            statusBar.textContent = message;
+        }
+        
+        // 绘制树
+        function drawTree(growth) {
+            ctx.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
+            
+            // 绘制背景
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(0, 0, treeCanvas.width, treeCanvas.height);
+            
+            // 绘制地面
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, treeCanvas.height - 50, treeCanvas.width, 50);
+            
+            // 绘制草地
+            ctx.fillStyle = '#2E8B57';
+            ctx.fillRect(0, treeCanvas.height - 50, treeCanvas.width, 10);
+            
+            // 树干
+            const trunkHeight = 80 + growth * 1.5;
+            const trunkWidth = 20 + growth * 0.2;
+            
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(
+                treeCanvas.width / 2 - trunkWidth / 2,
+                treeCanvas.height - 50 - trunkHeight,
+                trunkWidth,
+                trunkHeight
+            );
+            
+            // 树冠 - 根据成长值增加大小和复杂度
+            const canopySize = 60 + growth * 2;
+            const layers = 3 + Math.floor(growth / 20);
+            
+            for (let i = 0; i < layers; i++) {
+                const layerSize = canopySize - i * 15;
+                const layerY = treeCanvas.height - 50 - trunkHeight - i * 20;
+                
+                ctx.beginPath();
+                ctx.arc(
+                    treeCanvas.width / 2,
+                    layerY,
+                    layerSize,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fillStyle = `rgba(34, ${120 + i * 20}, 34, 0.8)`;
+                ctx.fill();
+            }
+            
+            // 如果成长值高，添加一些花朵
+            if (growth > 50) {
+                ctx.fillStyle = '#FFD700';
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i / 5) * Math.PI * 2;
+                    const flowerX = treeCanvas.width / 2 + Math.cos(angle) * (canopySize - 10);
+                    const flowerY = treeCanvas.height - 50 - trunkHeight - 40 + Math.sin(angle) * 20;
+                    
+                    ctx.beginPath();
+                    ctx.arc(flowerX, flowerY, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        // 动画循环
+        function animateTree() {
+            // 平滑过渡成长值
+            const currentGrowth = parseFloat(growthValue.textContent) || 0;
+            const targetGrowth = treeGrowth;
+            
+            if (Math.abs(currentGrowth - targetGrowth) > 0.5) {
+                const newGrowth = currentGrowth + (targetGrowth - currentGrowth) * 0.1;
+                growthValue.textContent = `${Math.round(newGrowth)}%`;
+                progressBar.style.width = `${newGrowth}%`;
+                drawTree(newGrowth);
+            } else if (targetGrowth > 0) {
+                drawTree(targetGrowth);
+            }
+            
+            animationId = requestAnimationFrame(animateTree);
+        }
+        
+        // 庆祝效果
+        function celebrate() {
+            updateStatusBar("🎉 恭喜！你已完成今天的朗读目标！🎉");
+            statusBar.classList.add('celebration');
+            
+            // 创建粒子效果
+            for (let i = 0; i < 50; i++) {
+                createParticle();
+            }
+            
+            // 5秒后停止庆祝效果
+            setTimeout(() => {
+                statusBar.classList.remove('celebration');
+            }, 5000);
+        }
+        
+        // 创建粒子
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            
+            // 随机位置
+            const x = Math.random() * window.innerWidth;
+            const y = window.innerHeight + 10;
+            
+            // 随机颜色
+            const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#FF9FF3', '#F368E0'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            particle.style.background = color;
+            particle.style.width = `${Math.random() * 10 + 5}px`;
+            particle.style.height = particle.style.width;
+            
+            particlesContainer.appendChild(particle);
+            
+            // 动画结束后移除粒子
+            setTimeout(() => {
+                particle.remove();
+            }, 2000);
+        }
+        
+        // 初始化应用
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
